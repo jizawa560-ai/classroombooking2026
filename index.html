@@ -1,286 +1,279 @@
 <!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elite Class Booking - Colorful Edition</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/interact.js/1.10.11/interact.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Prompt', sans-serif; background: #f0f7ff; color: #2d3436; }
-        .seat { 
-            width: 85px; height: 85px; position: absolute; border: 4px solid #2d3436;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border-radius: 20px; font-weight: 700; cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 4px 4px 0px #2d3436;
-        }
-        .seat.available { background: #ffeaa7; color: #d35400; }
-        .seat.occupied { background: #55efc4; color: #00b894; border-color: #00b894; cursor: not-allowed; }
-        .seat.selected { background: #ff7675; color: #fff; transform: scale(1.1) rotate(3deg); z-index: 10; }
-        .seat.dragging { opacity: 0.7; border-style: dashed; z-index: 50; }
-        #room-canvas { 
-            min-height: 750px; background: white; position: relative; 
-            border: 6px solid #2d3436; border-radius: 40px;
-            background-image: radial-gradient(#dfe6e9 2px, transparent 2px);
-            background-size: 30px 30px;
-        }
-        .lang-btn { padding: 6px 12px; border: 3px solid #2d3436; font-weight: bold; border-radius: 12px; background: white; }
-        .lang-btn.active { background: #6c5ce7; color: white; box-shadow: 3px 3px 0px #000; }
-        .modern-card { border: 4px solid #2d3436; border-radius: 24px; background: white; box-shadow: 8px 8px 0px #2d3436; }
-    </style>
-</head>
-<body>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ระบบจองโต๊ะ ป.6/1 (IEP 6)</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--sky:#2f8fe8;--sun:#ffc933;--mint:#2fbf71;--coral:#ff6b5b;--ink:#1d2b44;--bg:#eef7ff;--gray:#d9dfe7}
+*{box-sizing:border-box}body{margin:0;font-family:Kanit,sans-serif;background:var(--bg);color:var(--ink)}
+.page{display:none;min-height:100vh;padding:20px}.page.on{display:block}
+.card{background:#fff;border-radius:22px;padding:22px;box-shadow:0 6px 0 #cfe3f7;max-width:460px;margin:8vh auto}
+h1,h2{margin:0 0 12px}label{display:block;margin:12px 0 4px;font-weight:500}
+input,select{width:100%;padding:12px;border:2px solid #cbd9ea;border-radius:12px;font:inherit}
+.f{position:relative}.f i{position:absolute;right:12px;top:14px;font-style:normal}
+button{font:inherit;border:0;border-radius:14px;padding:12px 18px;background:var(--sky);color:#fff;cursor:pointer;font-weight:500}
+button.s{background:#fff;color:var(--ink);border:2px solid #cbd9ea}button.r{background:var(--coral)}button:disabled{opacity:.4}
+.opt{display:flex;align-items:center;gap:8px;margin:8px 0;font-weight:500}.opt input{width:auto;margin:0;transform:scale(1.3)}
+.err{color:var(--coral);font-size:14px;min-height:18px}
+#bigtick{display:none;font-size:110px;text-align:center;color:var(--mint);animation:pop .6s}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+.purpose{display:block;width:100%;text-align:left;background:var(--sun);color:var(--ink);font-size:22px;margin:14px 0;padding:22px}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;z-index:9;padding:16px}
+.modal.on{display:flex}.modal .card{margin:0}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+/* หน้าห้องรอ */
+#p3{background:#0a1f5c;color:#fff;text-align:center;padding-top:12vh}
+#p3.red{background:#c4161c}#p3 h1{font-size:clamp(28px,6vw,56px)}
+#cd{font-size:clamp(40px,11vw,140px);font-weight:700;text-shadow:0 0 18px #fff,0 0 42px #6cf}
+#p3.red #cd{color:var(--sun);text-shadow:0 0 24px #ff0;animation:beat .5s infinite}
+@keyframes beat{50%{transform:scale(1.2)}}
+/* หน้าจอง */
+.top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;max-width:900px;margin:0 auto 10px}
+.badge{padding:6px 14px;border-radius:99px;background:var(--sun);font-weight:500}
+.legend span{margin-right:12px;white-space:nowrap}.dot{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px}
+.scroll{overflow:auto;padding-bottom:10px}
+#room{display:grid;gap:8px;min-width:720px;max-width:900px;margin:0 auto;
+ grid-template-columns:70px repeat(2,1fr) 18px repeat(3,1fr) 18px repeat(3,1fr) 70px}
+.blk{border-radius:10px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:500;text-align:center}
+.seat{position:relative;height:62px;border-radius:12px;background:var(--gray);color:var(--ink);padding:0;font-size:14px;box-shadow:0 3px 0 #b8c2cf}
+.seat b{position:absolute;left:6px;top:3px;font-size:11px;opacity:.7}
+.seat.hold{background:var(--sun)}.seat.booked{background:var(--mint);color:#fff;box-shadow:0 3px 0 #1f8f53}
+.seat.mine{outline:3px solid var(--sky)}.seat:disabled{opacity:1;cursor:not-allowed}
 
-<!-- LOGIN SCREEN -->
-<div id="login-screen" class="fixed inset-0 bg-[#a29bfe] z-[1000] flex items-center justify-center p-6">
-    <div class="max-w-md w-full modern-card p-10 text-center">
-        <div class="flex justify-end mb-4 gap-2">
-            <button onclick="setLang('th')" class="lang-btn" id="lang-th-login">TH</button>
-            <button onclick="setLang('en')" class="lang-btn" id="lang-en-login">EN</button>
-        </div>
-        <h1 class="text-4xl font-black italic mb-2 text-[#6c5ce7] uppercase" id="t-login-title">RESERVE FUN!</h1>
-        <p id="thai-clock-login" class="text-sm font-bold text-gray-500 mb-8">00:00:00</p>
-        <div class="space-y-4">
-            <input type="text" id="username" placeholder="NAME / ชื่อ" class="w-full p-4 border-4 border-black rounded-xl text-lg font-bold outline-none">
-            <div class="flex gap-2">
-                <button onclick="setRole('student')" id="role-std" class="flex-1 py-3 border-4 border-black rounded-xl bg-black text-white font-bold">STUDENT</button>
-                <button onclick="setRole('admin')" id="role-adm" class="flex-1 py-3 border-4 border-black rounded-xl bg-white font-bold">ADMIN</button>
-            </div>
-            <div id="admin-auth" class="hidden"><input type="password" id="admin-pass" placeholder="SECRET KEY" class="w-full p-4 border-4 border-black rounded-xl bg-yellow-100"></div>
-            <button onclick="handleLogin()" class="w-full py-5 bg-[#6c5ce7] text-white border-4 border-black rounded-xl text-xl font-black shadow-[4px_4px_0px_#000]" id="t-enter">ENTER</button>
-        </div>
-    </div>
-</div>
+/* ===== หัวเว็บ + ป้ายริบบิ้น (ตามแบบที่ส่งมา) ===== */
+body{background:linear-gradient(180deg,#26385f 0%,#131f3a 100%) fixed;min-height:100vh}  /* กรมท่าเข้ม ดูเป็นทางการ */
+#hdr{position:sticky;top:0;z-index:30;height:68px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 18px;box-shadow:0 6px 16px #0003}
+.brand{display:flex;align-items:center;gap:10px}.brand img{height:50px}
+.b1{font-size:20px;font-weight:500;border-bottom:2px solid var(--ink);display:inline-block;line-height:1.2}.b2{font-size:20px;line-height:1.2}
+.who{display:flex;align-items:center;gap:12px;text-align:right}.w1{font-size:18px;font-weight:700}.w2{font-size:14px;font-weight:500}
+#hout{background:none;padding:4px;border-radius:8px}#hout svg{width:38px;height:38px;display:block}
+.ribbon{position:fixed;top:68px;left:24px;width:96px;padding:22px 6px 44px;z-index:20;text-align:center;color:#fff;font-weight:700;font-size:28px;line-height:1.3;pointer-events:none;
+ background:linear-gradient(115deg,#e23c3c 0%,#ff7b7b 45%,#e23c3c 75%);clip-path:polygon(0 0,100% 0,100% calc(100% - 38px),50% 100%,0 calc(100% - 38px));
+ text-shadow:0 2px 0 #0003;transform:translateY(-105%);transition:transform .8s cubic-bezier(.34,1.56,.64,1)}
+.ribbon.on{transform:none}
+#p4 h2,#p4 #who,#p4 .legend{color:#fff;text-shadow:0 1px 2px #0003}.badge{color:var(--ink)}
+@media(max-width:640px){.b1,.b2{font-size:13px}.brand img{height:40px}.w1{font-size:13px}.w2{font-size:11px}#hout svg{width:30px;height:30px}.ribbon{width:66px;font-size:19px;left:8px}}
+</style></head><body>
 
-<!-- MAIN APP -->
-<div id="app" class="hidden">
-    <nav class="border-b-8 border-black p-6 flex justify-between items-center bg-[#fdcb6e] sticky top-0 z-[100]">
-        <h2 class="text-3xl font-black italic text-white drop-shadow-md">PLAYFUL.BOOK</h2>
-        <div class="flex items-center gap-4">
-            <div class="bg-white px-4 py-1 border-4 border-black rounded-full font-bold hidden md:block" id="current-time">00:00:00</div>
-            <button onclick="location.reload()" class="bg-[#ff7675] text-white px-4 py-2 border-4 border-black font-black rounded-xl text-xs" id="t-logout">LOGOUT</button>
-        </div>
-    </nav>
 
-    <div class="flex flex-col lg:flex-row min-h-screen">
-        <!-- Sidebar -->
-        <aside class="w-full lg:w-96 border-b-8 lg:border-b-0 lg:border-r-8 border-black p-8 bg-white">
-            <h3 class="text-xs font-black text-purple-400 mb-4 tracking-widest uppercase" id="t-select-room">SELECT ROOM</h3>
-            <div id="room-nav" class="space-y-3"></div>
-            <button id="add-room-btn" onclick="addNewRoom()" class="hidden w-full mt-4 py-3 border-4 border-dashed border-black rounded-xl font-black hover:bg-black hover:text-white transition">+ NEW ROOM</button>
+<header id="hdr"><div class="brand"><img src="data:image/png;base64,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" alt="โลโก้"><div><div class="b1">6/1 IEP. class</div><br><div class="b2">Intensive English Program</div></div></div>
+ <div class="who"><div><div class="w1">ชื่อที่เข้าระบบอยู่ <span id="hn">..........</span></div><div class="w2">ชั้นประถมศึกษาปีที่ <span id="hg">..........</span></div></div>
+ <button id="hout" title="ออกจากระบบ"><svg viewBox="0 0 48 48" fill="none" stroke="#000" stroke-width="4"><path d="M16 4H6v40h10"/><path d="M14 24h26M31 14l10 10-10 10" stroke-linejoin="round"/></svg></button></div></header>
+<div class="ribbon" id="rb"></div>
 
-            <div id="admin-panel" class="hidden mt-8 pt-8 border-t-4 border-purple-100 space-y-4">
-                <button onclick="toggleEdit()" id="edit-btn" class="w-full py-4 bg-[#fab1a0] border-4 border-black rounded-xl font-black shadow-[4px_4px_0px_#000]" id="t-drag">DRAG MODE</button>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="applyTemplate('grid')" class="py-2 border-2 border-black rounded-lg text-xs font-bold bg-white">GRID</button>
-                    <button onclick="applyTemplate('u')" class="py-2 border-2 border-black rounded-lg text-xs font-bold bg-white">U-SHAPE</button>
-                </div>
-                <button onclick="addSeat()" class="w-full py-2 bg-[#81ecec] border-2 border-black rounded-lg font-bold">+ ADD SEAT</button>
-                <button onclick="clearRoom()" class="w-full py-2 border-2 border-red-500 text-red-500 font-bold rounded-lg uppercase">RESET ALL</button>
-            </div>
+<!-- หน้า 1 -->
+<section class="page" id="p1"><div class="card">
+ <h1>🎒 ระบบจองโต๊ะ ป.6/1 (IEP 6)</h1>
+ <div class="f"><label>ชื่อ-สกุล</label><input id="fn" placeholder="เช่น สมชาย ใจดี"><i id="t1"></i></div>
+ <div class="f"><label>ชื่อเล่น</label><input id="nn"><i id="t2"></i></div>
+ <label>ชั้นประถมศึกษาปีที่</label><select id="gr"></select>
+ <div class="err" id="e1"></div>
+ <div id="bigtick">✅</div>
+ <div class="row"><button id="mk" disabled>สร้างบัญชี</button><button class="s" id="lg" style="display:none">เข้าสู่ระบบด้วยบัญชีนี้</button></div>
+</div></section>
 
-            <div id="student-panel" class="mt-8">
-                <div class="p-6 modern-card bg-[#f1f2f6]">
-                    <h4 class="font-black text-xl text-[#6c5ce7] mb-2" id="t-my-selection">MY SELECTION</h4>
-                    <p class="font-bold mb-4"><span id="t-seats-label">Seats</span>: <span id="seat-codes" class="text-pink-500 text-xl">-</span></p>
-                    <button id="confirm-btn" onclick="finalizeBooking()" disabled class="w-full py-4 bg-[#6c5ce7] text-white border-4 border-black rounded-xl font-black shadow-[4px_4px_0px_#000] disabled:opacity-30" id="t-confirm">CONFIRM</button>
-                    <button onclick="cancelSelection()" class="w-full mt-2 text-xs font-bold underline" id="t-cancel">Cancel Selection</button>
-                </div>
-            </div>
-        </aside>
+<!-- หน้า 2 -->
+<section class="page" id="p2"><div class="card">
+ <h2 id="hi"></h2><p>เลือกสิ่งที่ต้องการทำ</p>
+ <button class="purpose" id="pc">1. จองโต๊ะ</button>
+ <div class="row" id="pcOpt" style="display:none"><button class="s" id="how">ดูวิธีการใช้</button><button id="go">เข้าจอง</button></div>
+ <div class="row"><button class="s" id="out">ออกจากระบบ</button></div>
+</div></section>
 
-        <!-- Room Canvas -->
-        <main class="flex-1 p-6 lg:p-10 overflow-auto">
-            <div class="max-w-6xl mx-auto">
-                <div class="flex justify-between items-end mb-8">
-                    <div>
-                        <h1 id="room-name-display" class="text-5xl font-black uppercase text-[#2d3436]">ROOM</h1>
-                        <p class="text-purple-400 font-bold text-xs uppercase" id="t-map-label">STATIONARY CLASSROOM MAP</p>
-                    </div>
-                </div>
-                <div id="room-canvas">
-                    <div class="absolute top-0 left-1/2 -translate-x-1/2 px-12 py-3 bg-[#2d3436] text-white font-black tracking-[0.5em] rounded-b-2xl text-xs" id="t-board">BOARD</div>
-                </div>
-            </div>
-        </main>
-    </div>
-</div>
+<!-- หน้า 3 -->
+<section class="page" id="p3">
+ <h1>เตรียมตัวจองที่นั่ง</h1><div id="cd">--</div>
+ <p id="cdmsg" style="font-size:20px"></p><button class="s" id="back">ย้อนกลับ</button>
+</section>
 
+<!-- หน้า 4 -->
+<section class="page" id="p4">
+ <div class="top"><div><h2 style="margin:0">ป.6/1 (IEP 6)</h2><div id="who"></div></div>
+  <div><span class="badge" id="cnt"></span> <span class="badge" id="st"></span></div>
+  <button id="dl">ดาวน์โหลดผังที่นั่ง (PNG)</button></div>
+ <div class="top legend"><div>
+  <span><i class="dot" style="background:var(--gray)"></i> ว่าง จองได้</span>
+  <span><i class="dot" style="background:var(--sun)"></i> กำลังจอง (ล็อก 60 วินาที)</span>
+  <span><i class="dot" style="background:var(--mint)"></i> จองแล้ว</span></div></div>
+ <div class="scroll"><div id="room"></div></div>
+</section>
+
+<div class="modal" id="md"><div class="card"><div id="mt"></div><div class="row" id="mb"></div></div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-// --- DICTIONARY & CONFIG ---
-const translations = {
-    th: {
-        login_title: "จองโต๊ะเรียน!", enter: "เริ่มใช้งาน", logout: "ออก", select_room: "เลือกห้องเรียน",
-        drag: "โหมดจัดวาง", my_selection: "ที่นั่งที่คุณเลือก", seats_label: "หมายเลขโต๊ะ",
-        confirm: "ยืนยันการจอง", cancel: "ยกเลิกที่เลือก", map_label: "แผนผังที่นั่งในห้องเรียน", board: "กระดานหน้าห้อง"
-    },
-    en: {
-        login_title: "RESERVE FUN!", enter: "LET'S GO", logout: "LOGOUT", select_room: "SELECT ROOM",
-        drag: "DRAG MODE", my_selection: "MY SELECTION", seats_label: "Seats",
-        confirm: "CONFIRM", cancel: "Cancel selection", map_label: "STATIONARY CLASSROOM MAP", board: "BOARD"
-    }
+/* ===== ค่า config ที่เดียว ===== */
+const CONFIG={
+ OPEN_TIME:'2026-11-01T09:00:00+07:00',     // แก้เวลาเปิดจองได้ที่นี่
+ BOOKING_WINDOW_MINUTES:2880,  // 2 วัน (48 ชม.) = ปิดจอง 3 พ.ย. 09:00 น.
+ FULL_OPEN_DATE:'2026-11-03T00:00:00+07:00',
+ MAX_SEATS_PER_USER:3, HOLD_SECONDS:60,
+ FIREBASE:{apiKey:'AIzaSyCc9-EzTM3bdPfPngQPUegc5rhwxA-ZdJM',authDomain:'grade6-1-iep-anubanbmn.firebaseapp.com',projectId:'grade6-1-iep-anubanbmn',storageBucket:'grade6-1-iep-anubanbmn.firebasestorage.app',messagingSenderId:'241316372725',appId:'1:241316372725:web:c72a5e8ce736c955c125bc'}
 };
+const OPEN=Date.parse(CONFIG.OPEN_TIME),CLOSE=OPEN+CONFIG.BOOKING_WINDOW_MINUTES*6e4,FULL=Date.parse(CONFIG.FULL_OPEN_DATE);
+firebase.initializeApp(CONFIG.FIREBASE);
+const db=firebase.firestore(),$=id=>document.getElementById(id);
+let offset=0,me=JSON.parse(localStorage.getItem('me')||'null'),seats={},tick;
+const now=()=>Date.now()+offset;               // เวลาเซิร์ฟเวอร์ ไม่ใช่นาฬิกาเครื่อง
+const phase=()=>{const t=now();return t<OPEN?'before':t<CLOSE?'open':(FULL>CLOSE&&t>=FULL)?'full':'closed'}; // ถ้า FULL ไม่เกิน CLOSE จะไม่มีช่วงเปิดเต็มรูปแบบ
+const canBook=()=>['open','full'].includes(phase());
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const th=ms=>new Date(ms).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',dateStyle:'long',timeStyle:'short'});
 
-let currentLang = 'th';
-const ADMIN_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"; // "admin"
-
-let state = {
-    user: { name: '', role: 'student' },
-    activeRoom: 'R1', isEdit: false, selected: [],
-    rooms: { 
-        'R1': { name: 'IT LAB', seats: generateSeats(12) },
-        'R2': { name: 'STUDIO', seats: generateSeats(8) }
-    }
-};
-
-function generateSeats(n) {
-    let s = {};
-    for(let i=1; i<=n; i++) s[i] = { x: (i-1)%4 * 120 + 150, y: Math.floor((i-1)/4) * 120 + 150, status: 'free' };
-    return s;
+/* ซิงก์เวลากับเซิร์ฟเวอร์ (ใช้ serverTimestamp) */
+async function syncTime(){
+ const r=db.collection('_t').doc(me?me.key:'x');
+ const t0=Date.now();await r.set({t:firebase.firestore.FieldValue.serverTimestamp()});
+ const s=await r.get();offset=s.data().t.toMillis()-(t0+Date.now())/2;
 }
+function show(n){document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));$('p'+n).classList.add('on');clearInterval(tick);
+ $('hdr').style.display=n==3?'none':'flex';updHdr();
+ setRibbon(n==1?'กรุณา<br>เข้าสู่<br>ระบบ':null);   // หน้าเข้าสู่ระบบ: ป้ายเลื่อนลงมา
+ if(n==3)runCountdown();if(n==4)runSeats();}
 
-// --- LOGIC FUNCTIONS ---
-function setLang(lang) {
-    currentLang = lang;
-    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(`lang-${lang}-login`).classList.add('active');
-    const dict = translations[lang];
-    document.getElementById('t-login-title').innerText = dict.login_title;
-    document.getElementById('t-enter').innerText = dict.enter;
+
+/* ===== หัวเว็บและป้ายริบบิ้น ===== */
+let ribKey=null;
+function setRibbon(html){const k=html||'';if(k===ribKey)return;ribKey=k;const r=$('rb');
+ if(html){r.innerHTML=html;r.classList.remove('on');void r.offsetWidth;r.classList.add('on')}else r.classList.remove('on')}
+function updHdr(){$('hn').textContent=me?me.nick:'..........';$('hg').textContent=me?'ป.'+me.grade:'..........'}
+$('hout').onclick=()=>{localStorage.removeItem('me');me=null;show(1)};
+
+/* ===== หน้า 1 ===== */
+for(let i=1;i<=6;i++)$('gr').add(new Option('ป.'+i,i,i==6,i==6));
+const nameOk=v=>/^[ก-๙a-zA-Z\s.]{2,}$/.test(v.trim()) && v.trim().includes(' ');
+const keyOf=v=>v.trim().replace(/\s+/g,' ').toLowerCase().replace(/\//g,'-');
+function validate(){const a=nameOk($('fn').value),b=$('nn').value.trim().length>0;
+ $('t1').textContent=a?'✅':'';$('t2').textContent=b?'✅':'';
+ $('e1').textContent=$('fn').value&&!a?'กรอกชื่อและสกุลเป็นภาษาไทยหรืออังกฤษ คั่นด้วยเว้นวรรค':'';
+ $('mk').disabled=!(a&&b);$('lg').style.display='none';return a&&b}
+$('fn').oninput=$('nn').oninput=validate;
+$('mk').onclick=async()=>{
+ if(!validate())return;await ready;const key=keyOf($('fn').value);
+ const ref=db.collection('accounts').doc(key),s=await ref.get();
+ if(s.exists){$('e1').textContent='มีบัญชีชื่อนี้แล้ว';$('lg').style.display='';return}
+ const d={fullName:$('fn').value.trim(),nick:$('nn').value.trim(),grade:$('gr').value,created:firebase.firestore.FieldValue.serverTimestamp()};
+ await ref.set(d);finish(key,d)};
+$('lg').onclick=async()=>{await ready;const key=keyOf($('fn').value),s=await db.collection('accounts').doc(key).get();finish(key,s.data())};
+function finish(key,d){me={key,fullName:d.fullName,nick:d.nick,grade:d.grade};localStorage.setItem('me',JSON.stringify(me));
+ $('bigtick').style.display='block';setTimeout(()=>{$('bigtick').style.display='none';goP2()},1200)}
+
+/* ===== หน้า 2 ===== */
+function goP2(){$('hi').textContent='สวัสดี '+me.nick+' 👋';show(2)}
+$('pc').onclick=()=>$('pcOpt').style.display='flex';
+$('out').onclick=()=>{localStorage.removeItem('me');me=null;show(1)};
+$('how').onclick=()=>modal(`<h2>วิธีการใช้</h2><ol style="padding-left:20px;line-height:1.7">
+<li>กดโต๊ะสีเทา แล้วกดยืนยัน</li><li>จองได้สูงสุด ${CONFIG.MAX_SEATS_PER_USER} โต๊ะ</li>
+<li>เทา = ว่าง, เหลือง = กำลังจอง (ล็อก ${CONFIG.HOLD_SECONDS} วินาที), เขียว = จองแล้ว</li>
+<li>เปิดจอง ${th(OPEN)} นาน ${CONFIG.BOOKING_WINDOW_MINUTES/1440} วัน (ถึง ${th(CLOSE)})</li>
+<li>หลังหมดเวลา จองไม่ได้ แต่ดูผังได้${FULL>CLOSE?` จนถึง ${th(FULL)} ระบบเปิดเต็มรูปแบบ จองโต๊ะที่ว่าง เปลี่ยน หรือยกเลิกได้`:''}</li></ol>`,[['ปิด']]);
+$('go').onclick=async()=>{await ready;show(phase()==='before'?3:4)};
+
+/* ===== หน้า 3: นับถอยหลัง ===== */
+function runCountdown(){
+ $('cdmsg').textContent='เปิดจอง 1 พฤศจิกายน พ.ศ. 2569 เวลา 09:00 น. (เวลาประเทศไทย)';
+ const loop=()=>{const left=OPEN-now();
+  if(left<=0){clearInterval(tick);$('p3').classList.remove('red');return show(4)}
+  const s=Math.ceil(left/1000);$('p3').classList.toggle('red',s<=10);
+  if(s<=60){$('cd').textContent=s;$('cdmsg').textContent=''}
+  else{const p=n=>String(n).padStart(2,'0');$('cd').textContent=`${p(Math.floor(s/86400))}:${p(Math.floor(s%86400/3600))}:${p(Math.floor(s%3600/60))}:${p(s%60)}`}};
+ loop();tick=setInterval(loop,200)}
+$('back').onclick=goP2;
+
+/* ===== หน้า 4: ผังที่นั่ง ===== */
+// สร้างผัง: คอลัมน์ 1=ล็อกเกอร์ 2-3=ซ้าย 4=ทางเดิน 5-7=กลาง 8=ทางเดิน 9-11=ขวา 12=ประตู
+function buildRoom(){const R=$('room');R.innerHTML='';
+ const B=(t,c,col,row,sp=1,rs=1)=>{const d=document.createElement('div');d.className='blk';d.textContent=t;
+  d.style.cssText=`background:${c};grid-column:${col}/span ${sp};grid-row:${row}/span ${rs};min-height:44px`;R.appendChild(d)};
+ B('กระดาน','#3a78c9',2,1,9);B('โต๊ะครู','#2fbf71',1,1);
+ B('ล็อกเกอร์','#7d4fd6',1,2,1,5);B('ประตู','#e0323a',12,2);B('ประตู','#e0323a',12,6);
+ B('ล็อกเกอร์','#7d4fd6',5,7,7);
+ let n=1;
+ for(let r=0;r<5;r++){const cols=[2,3,5,6,7,...(r==4?[9]:[]),10,11];
+  cols.forEach(c=>{const b=document.createElement('button');b.className='seat';b.id='s'+n;b.dataset.n=n;
+   b.style.cssText=`grid-column:${c};grid-row:${r+2}`;b.onclick=()=>pick(+b.dataset.n);R.appendChild(b);n++})}}
+function stateOf(n){const s=seats[n];if(!s)return'free';
+ if(s.status==='booked')return'booked';
+ if(s.status==='hold'&&s.holdUntil>now())return'hold';return'free'}
+function paint(){
+ if(!$('p4').classList.contains('on'))return;
+ let mine=0;for(let n=1;n<=36;n++){const s=seats[n],st=stateOf(n),b=$('s'+n);if(!b)return;
+  if(st==='booked'&&s.ownerKey===me.key)mine++;
+  b.className='seat '+(st==='free'?'':st)+(s&&s.ownerKey===me.key&&st!=='free'?' mine':'');
+  b.innerHTML='<b>'+n+'</b>'+(st==='booked'?esc(s.label||s.nick):'');b.disabled=!canBook()||st==='booked'&&s.ownerKey!==me.key||st==='hold'&&s.ownerKey!==me.key;
+  if(st==='booked')b.disabled=false;}   // กดดูชื่อเต็มได้เสมอ
+ const p=phase(),m={before:'ยังไม่เปิดจอง',open:'กำลังเปิดจอง',closed:'ปิดจองชั่วคราว (ดูผังได้อย่างเดียว)',full:'เปิดทำการเต็มรูปแบบ'};
+ let extra='';if(p==='open'){const l=Math.max(0,CLOSE-now());extra=` เหลือ ${Math.floor(l/6e4)}:${String(Math.floor(l/1e3)%60).padStart(2,'0')}`}
+ $('st').textContent=m[p]+extra;$('cnt').textContent=`จองแล้ว ${mine}/${CONFIG.MAX_SEATS_PER_USER} โต๊ะ`;paint.mine=mine;
+ setRibbon(mine>=CONFIG.MAX_SEATS_PER_USER?`จอง<br>ครบ<br>แล้ว<br>${mine}/${CONFIG.MAX_SEATS_PER_USER}`:null)}
+function runSeats(){$('who').textContent=`${me.fullName} (${me.nick})`;buildRoom();
+ db.collection('seats').onSnapshot(q=>{seats={};q.forEach(d=>{const x=d.data();x.holdUntil=x.holdUntil?x.holdUntil.toMillis():0;seats[+d.id]=x});paint()});
+ tick=setInterval(paint,1000);paint()}
+
+/* ทำรายการแบบ transaction: คนแรกที่เซิร์ฟเวอร์รับได้ชนะ */
+async function tx(n,fn){const ref=db.collection('seats').doc(String(n));
+ return db.runTransaction(async t=>{const s=await t.get(ref),d=s.exists?s.data():{};return fn(t,ref,d)})}
+async function pick(n){
+ const s=seats[n],st=stateOf(n);
+ if(st==='booked'){
+  const own=s.ownerKey===me.key;
+  return modal(`<h2>โต๊ะ ${n}</h2><p>ผู้จอง: ${esc(s.fullName)} (${esc(s.nick)})</p>${s.forFriend?`<p>🎁 จองให้เพื่อน: <b>${esc(s.friendName)}</b></p>`:'<p>จองให้ตัวเอง</p>'}`,
+   own&&canBook()?[['ยกเลิกการจอง',async()=>{await tx(n,(t,r)=>t.delete(r))},'r'],['ปิด']]:[['ปิด']])}
+ if(!canBook())return;
+ if(paint.mine>=CONFIG.MAX_SEATS_PER_USER)return modal('<h2>จองครบแล้ว</h2><p>จองได้สูงสุด '+CONFIG.MAX_SEATS_PER_USER+' โต๊ะ ยกเลิกโต๊ะเดิมก่อนจึงจะจองเพิ่มได้</p>',[['ตกลง']]);
+ try{await tx(n,(t,r,d)=>{ // ถ้ามีคนจอง/กำลังจองก่อนแล้ว ให้ล้มเหลว
+   if(d.status==='booked'||(d.status==='hold'&&d.holdUntil.toMillis()>now()&&d.ownerKey!==me.key))throw new Error('taken');
+   t.set(r,{status:'hold',ownerKey:me.key,holdUntil:firebase.firestore.Timestamp.fromMillis(now()+CONFIG.HOLD_SECONDS*1000)})})}
+ catch(e){console.error(e);return modal(e.message==='taken'?'<h2>โต๊ะนี้ถูกจองแล้ว</h2>':'<h2>จองไม่สำเร็จ</h2><p>'+(e.code||'')+' '+e.message+'</p>',[['ตกลง']])}
+ modal(`<h2>จองโต๊ะหมายเลข ${n} ใช่หรือไม่</h2>
+  <p style="margin:4px 0">หมายเหตุ: โต๊ะนี้จองให้ใคร</p>
+  <label class="opt"><input type="radio" name="who" value="self" checked onchange="$('fname').style.display='none'"> จองให้ตัวเอง</label>
+  <label class="opt"><input type="radio" name="who" value="friend" onchange="$('fname').style.display='block';$('fname').focus()"> จองให้เพื่อน</label>
+  <input id="fname" placeholder="ชื่อเพื่อน (ชื่อเล่นหรือชื่อจริง)" maxlength="30" style="display:none">
+  <div class="err" id="ferr"></div>`,[
+  ['ยืนยัน',async()=>{const fr=document.querySelector('input[name=who]:checked').value==='friend',fname=$('fname').value.trim();try{await tx(n,(t,r,d)=>{
+     if(d.status!=='hold'||d.ownerKey!==me.key||d.holdUntil.toMillis()<now()-2000)throw 0;
+     t.set(r,{status:'booked',ownerKey:me.key,nick:me.nick,fullName:me.fullName,forFriend:fr,friendName:fr?fname:'',label:fr?fname:me.nick,bookedAt:firebase.firestore.FieldValue.serverTimestamp()})})}
+   catch(e){console.error(e);modal(e&&e.code?'<h2>จองไม่สำเร็จ</h2><p>'+e.code+' '+e.message+'</p>':'<h2>หมดเวลาล็อกหรือโต๊ะถูกจองแล้ว</h2>',[['ตกลง']])}},
+   undefined,  // ตรวจชื่อเพื่อนก่อนปิดป๊อปอัป: ถ้าเลือก "จองให้เพื่อน" ต้องกรอกชื่อ
+   ()=>{const fr=document.querySelector('input[name=who]:checked').value==='friend',v=$('fname').value.trim();
+    if(fr&&!v)return'กรุณากรอกชื่อเพื่อน';
+    if(fr&&!/^[ก-๙a-zA-Z0-9\s.]{1,30}$/.test(v))return'ชื่อเพื่อนใช้ได้เฉพาะตัวอักษรไทย/อังกฤษ/ตัวเลข';return''}],
+  ['ยกเลิก',async()=>{await tx(n,(t,r,d)=>{if(d.status==='hold'&&d.ownerKey===me.key)t.delete(r)})},'s']],
+  async()=>{await tx(n,(t,r,d)=>{if(d.status==='hold'&&d.ownerKey===me.key)t.delete(r)}).catch(()=>{})});
 }
+function modal(html,btns,onDismiss){$('mt').innerHTML=html;$('mb').innerHTML='';
+ btns.forEach(([t,f,c,chk])=>{const b=document.createElement('button');b.textContent=t;if(c)b.className=c;
+  b.onclick=async()=>{if(chk){const m=chk();if(m){const e=$('ferr');if(e)e.textContent=m;return}}$('md').classList.remove('on');if(f)await f()};$('mb').appendChild(b)});$('md').classList.add('on')}
 
-function setRole(r) {
-    state.user.role = r;
-    document.getElementById('role-std').className = `flex-1 py-3 border-4 border-black rounded-xl font-bold ${r==='student'?'bg-black text-white':'bg-white'}`;
-    document.getElementById('role-adm').className = `flex-1 py-3 border-4 border-black rounded-xl font-bold ${r==='admin'?'bg-black text-white':'bg-white'}`;
-    document.getElementById('admin-auth').classList.toggle('hidden', r !== 'admin');
-}
+/* ===== ดาวน์โหลด PNG 1920x1080 ===== */
+$('dl').onclick=async()=>{await document.fonts.load('700 20px Kanit');
+ const c=document.createElement('canvas');c.width=1920;c.height=1080;const x=c.getContext('2d');
+ x.fillStyle='#eef7ff';x.fillRect(0,0,1920,1080);x.textAlign='center';x.textBaseline='middle';
+ const W=1700,X0=110,col=(i)=>X0+W*i/12,cw=W/12-8,box=(c1,r,sp,rs,t,clr)=>{const px=col(c1-1),py=140+(r-1)*135;
+  x.fillStyle=clr;x.beginPath();x.roundRect(px,py,cw*sp+(sp-1)*8+(sp-1)*(W/12-cw-8),130*rs+(rs-1)*5,14);x.fill();
+  x.fillStyle='#fff';x.font='500 30px Kanit';x.fillText(t,px+(cw*sp+(sp-1)*(W/12-cw))/2,py+(130*rs)/2)};
+ x.fillStyle='#1d2b44';x.font='700 48px Kanit';x.textAlign='left';x.fillText('ผังที่นั่ง ป.6/1 (IEP 6)',60,70);
+ x.font='400 26px Kanit';x.textAlign='right';x.fillText('ดาวน์โหลดเมื่อ '+th(now()),1860,70);x.textAlign='center';
+ // ใช้เลย์เอาต์เดียวกับหน้าจอ: อ่านตำแหน่งจริงจาก grid แล้ววาดสเกลขึ้น
+ const room=$('room'),rb=room.getBoundingClientRect(),sx=1800/rb.width,sy=900/rb.height,sc=Math.min(sx,sy),ox=60+(1800-rb.width*sc)/2,oy=120;
+ room.querySelectorAll('.blk,.seat').forEach(e=>{const r=e.getBoundingClientRect(),px=ox+(r.left-rb.left)*sc,py=oy+(r.top-rb.top)*sc,w=r.width*sc,h=r.height*sc;
+  const isSeat=e.classList.contains('seat'),n=e.dataset.n,st=isSeat?stateOf(+n):'';
+  x.fillStyle=isSeat?(st==='booked'?'#2fbf71':st==='hold'?'#ffc933':'#d9dfe7'):getComputedStyle(e).backgroundColor;
+  x.beginPath();x.roundRect(px,py,w,h,12*sc);x.fill();
+  if(isSeat){x.fillStyle=st==='booked'?'#fff':'#1d2b44';x.textAlign='left';x.font=`500 ${18*sc}px Kanit`;x.fillText(n,px+8,py+20*sc);
+   x.textAlign='center';x.font=`700 ${24*sc}px Kanit`;if(st==='booked')x.fillText(seats[n].label||seats[n].nick,px+w/2,py+h/2+8)}
+  else{x.fillStyle='#fff';x.font=`500 ${26*sc}px Kanit`;x.textAlign='center';x.fillText(e.textContent,px+w/2,py+h/2)}});
+ const a=document.createElement('a');a.download='ผังที่นั่ง_6-1_IEP6.png';a.href=c.toDataURL('image/png');a.click()};
 
-function handleLogin() {
-    const name = document.getElementById('username').value;
-    if(!name) return alert("Please enter your name!");
-    if(state.user.role === 'admin') {
-        const pass = document.getElementById('admin-pass').value;
-        if(CryptoJS.SHA256(pass).toString() !== ADMIN_HASH) return alert("Wrong Admin Password!");
-    }
-    state.user.name = name;
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    if(state.user.role === 'admin') {
-        document.getElementById('admin-panel').classList.remove('hidden');
-        document.getElementById('add-room-btn').classList.remove('hidden');
-        document.getElementById('student-panel').classList.add('hidden');
-    }
-    init();
-}
-
-function init() { renderNav(); renderCanvas(); updateClock(); }
-
-function renderNav() {
-    const nav = document.getElementById('room-nav');
-    nav.innerHTML = '';
-    Object.keys(state.rooms).forEach(id => {
-        const btn = document.createElement('button');
-        btn.className = `w-full p-4 border-4 border-black rounded-2xl font-black transition ${state.activeRoom===id?'bg-[#6c5ce7] text-white':'bg-white shadow-[4px_4px_0px_#000]'}`;
-        btn.innerHTML = state.rooms[id].name;
-        btn.onclick = () => { state.activeRoom = id; state.selected = []; renderNav(); renderCanvas(); };
-        nav.appendChild(btn);
-    });
-}
-
-function renderCanvas() {
-    const canvas = document.getElementById('room-canvas');
-    const room = state.rooms[state.activeRoom];
-    document.getElementById('room-name-display').innerText = room.name;
-    canvas.innerHTML = `<div class="absolute top-0 left-1/2 -translate-x-1/2 px-12 py-3 bg-[#2d3436] text-white font-black tracking-[0.5em] rounded-b-2xl text-xs uppercase">BOARD</div>`;
-
-    Object.keys(room.seats).forEach(id => {
-        const s = room.seats[id];
-        const el = document.createElement('div');
-        el.id = `s-${id}`;
-        el.className = `seat ${s.status === 'booked' ? 'occupied' : (state.selected.includes(id) ? 'selected' : 'available')}`;
-        if(state.isEdit) el.classList.add('dragging');
-        el.style.left = s.x + 'px'; el.style.top = s.y + 'px';
-        el.innerHTML = `<span class="text-[10px] opacity-40">#${id}</span>`;
-        if(!state.isEdit && s.status !== 'booked') el.onclick = () => selectSeat(id);
-        canvas.appendChild(el);
-    });
-    updateUI();
-}
-
-function selectSeat(id) {
-    const idx = state.selected.indexOf(id);
-    if(idx > -1) state.selected.splice(idx, 1);
-    else {
-        if(state.selected.length >= 3) return alert("Maximum 3 seats allowed!");
-        state.selected.push(id);
-    }
-    renderCanvas();
-}
-
-function finalizeBooking() {
-    if(confirm("Confirm booking for: " + state.selected.join(', '))) {
-        state.selected.forEach(id => state.rooms[state.activeRoom].seats[id].status = 'booked');
-        state.selected = [];
-        renderCanvas();
-    }
-}
-
-function toggleEdit() {
-    state.isEdit = !state.isEdit;
-    document.getElementById('edit-btn').className = `w-full py-4 border-4 border-black rounded-xl font-black shadow-[4px_4px_0px_#000] ${state.isEdit?'bg-green-400':'bg-[#fab1a0]'}`;
-    renderCanvas();
-}
-
-interact('.seat').draggable({
-    listeners: {
-        move(e) {
-            if(!state.isEdit) return;
-            const id = e.target.id.split('-')[1];
-            state.rooms[state.activeRoom].seats[id].x += e.dx;
-            state.rooms[state.activeRoom].seats[id].y += e.dy;
-            e.target.style.left = state.rooms[state.activeRoom].seats[id].x + 'px';
-            e.target.style.top = state.rooms[state.activeRoom].seats[id].y + 'px';
-        }
-    }
-});
-
-function addNewRoom() {
-    const name = prompt("Enter Room Name:");
-    if(name) {
-        const id = 'R' + Date.now();
-        state.rooms[id] = { name: name.toUpperCase(), seats: generateSeats(8) };
-        state.activeRoom = id;
-        init();
-    }
-}
-
-function addSeat() {
-    const room = state.rooms[state.activeRoom];
-    const newId = Object.keys(room.seats).length + 1;
-    room.seats[newId] = { x: 150, y: 150, status: 'free' };
-    renderCanvas();
-}
-
-function applyTemplate(type) {
-    const seats = state.rooms[state.activeRoom].seats;
-    const ids = Object.keys(seats);
-    ids.forEach((id, i) => {
-        if(type === 'grid') { seats[id].x = (i%4)*120+150; seats[id].y = Math.floor(i/4)*120+150; }
-        else { const angle = (i/ids.length)*Math.PI; seats[id].x = 450+300*Math.cos(angle-Math.PI); seats[id].y = 200+250*Math.sin(angle); }
-    });
-    renderCanvas();
-}
-
-function clearRoom() { if(confirm("Clear all bookings?")) { Object.keys(state.rooms[state.activeRoom].seats).forEach(id => state.rooms[state.activeRoom].seats[id].status = 'free'); renderCanvas(); } }
-function updateUI() { document.getElementById('seat-codes').innerText = state.selected.join(', ') || '-'; document.getElementById('confirm-btn').disabled = state.selected.length === 0; }
-function updateClock() { const now = new Date().toLocaleTimeString('th-TH'); document.getElementById('thai-clock-login').innerText = now; if(document.getElementById('current-time')) document.getElementById('current-time').innerText = now; setTimeout(updateClock, 1000); }
-function cancelSelection() { state.selected = []; renderCanvas(); }
-
-setLang('th');
-</script>
-</body>
-</html>
+/* ===== เริ่มต้น: แสดงหน้าทันที แล้วค่อยเชื่อมต่อฐานข้อมูล ===== */
+function bn(msg){let b=$('bn');if(!b){b=document.createElement('div');b.id='bn';
+ b.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99;background:#e0323a;color:#fff;padding:10px;text-align:center';document.body.prepend(b)}
+ b.textContent=msg}
+const timeout=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(new Error('หมดเวลาเชื่อมต่อ: ตรวจว่าสร้าง Firestore แล้ว และเปิดผ่านลิงก์เว็บ ไม่ใช่ไฟล์ในเครื่อง')),8000))]);
+const ready=timeout(firebase.auth().signInAnonymously().then(()=>syncTime()),8000)
+ .catch(e=>{bn('เชื่อมต่อฐานข้อมูลไม่ได้: '+(e.code||'')+' '+e.message);console.error(e);throw e});
+ready.catch(()=>{});
+me?goP2():show(1);
+</script></body></html>
